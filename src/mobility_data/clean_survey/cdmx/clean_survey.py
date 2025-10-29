@@ -4,6 +4,8 @@ import os
 # Plotting in terminal
 import plotext as plt
 
+DATA_PATH = "../../../../data/clean/cdmx/survey/"
+
 ###################################
 ###################################
 ###################################
@@ -14,10 +16,12 @@ import plotext as plt
 tvivienda = pd.read_csv("../../../../data/raw/cdmx_survey/tvivienda_eod2017/conjunto_de_datos/tvivienda.csv", dtype={"distrito": str, "ent": str, "mun": str})
 tvivienda["population"] = tvivienda["p1_1"] * tvivienda["factor"]
 tvivienda["muni"] = tvivienda["ent"] + tvivienda["mun"]
-tvivienda = tvivienda[["distrito", "muni", "population"]].rename(columns={"distrito": "geomid"})
+tvivienda = tvivienda[["distrito", "population"]].rename(columns={"distrito": "geomid"})
 
 population = tvivienda.groupby("geomid")["population"].sum().reset_index()
+population["population"].sum() # This yields 20,886,703 which is okay
 
+population.to_csv(os.path.join(DATA_PATH,"geomid_population.csv"), index=False)
 ###################################
 ###################################
 ###################################
@@ -37,6 +41,7 @@ w_geomid = work.groupby("work_geomid").apply(lambda x: x.loc[np.repeat(x.index.v
 w_geomid.rename(columns={"home_geomid": "workers"}, inplace=True)
 w_geomid.drop(columns=["factor"], inplace=True)
 
+w_geomid.to_csv(os.path.join(DATA_PATH,"geomid_workers.csv"), index=False)
 
 ###################################
 ###################################
@@ -58,6 +63,7 @@ pivot_df_od = district_counts_od.pivot(index='home_geomid', columns='work_geomid
 # Reindex both rows and columns with the full set of districts and fill missing values with 0
 pivot_df_od = pivot_df_od.reindex(index=full_geomid, columns=full_geomid, fill_value=0).fillna(0).astype(int)
 
+district_counts_od.to_csv(os.path.join(DATA_PATH,"od_matrix.csv"), index=False)
 ###################################
 ###################################
 ###################################
@@ -86,7 +92,6 @@ plt.xlabel('Hour of the Day')
 plt.ylabel('Percentage of Trips')
 plt.show()
 
-DATA_PATH = "../../../../data/clean/cdmx/survey/"
 # Create directory if it doesn't exist
 os.makedirs(DATA_PATH, exist_ok=True)
 perc_trip.reset_index().rename(columns={"index": "hour", "count": "percentage"}).to_csv(os.path.join(DATA_PATH,"hw_trips_by_hour.csv"), index=False)
