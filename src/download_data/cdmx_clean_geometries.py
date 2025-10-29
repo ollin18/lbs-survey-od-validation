@@ -27,7 +27,7 @@ output_path = '../../data/intermediate/geometries/cdmx_geometries.geojson'
 gdf.to_file(output_path, driver='GeoJSON')
 
 # Agebs - Temporary code... copy the one from mobility_eci here
-gdf = gpd.read_file("/data/WorldBank/cdmx_agebs_zm.geojson")
+gdf = gpd.read_file("/data/WorldBank/mexico_city_agebs_zm.geojson")
 if gdf.crs != 'epsg:4326':
     gdf = gdf.to_crs(epsg=4326)
 
