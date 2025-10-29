@@ -25,3 +25,29 @@ os.makedirs(os.path.dirname('../../data/intermediate/geometries/'),
             exist_ok=True)
 output_path = '../../data/intermediate/geometries/cdmx_geometries.geojson'
 gdf.to_file(output_path, driver='GeoJSON')
+
+# Agebs - Temporary code... copy the one from mobility_eci here
+gdf = gpd.read_file("/data/WorldBank/cdmx_agebs_zm.geojson")
+if gdf.crs != 'epsg:4326':
+    gdf = gdf.to_crs(epsg=4326)
+
+print(list(gdf.columns))
+
+gdf[["CVEGEO", "POBTOT", "geometry"]].rename(columns={"CVEGEO": "geomid",
+                                                      "POBTOT": "population"}
+                                              ).to_file(
+    "../../data/intermediate/geometries/cdmx_agebs_zm.geojson",
+    driver='GeoJSON')
+
+# Guadalajara - Temporary code... copy the one from mobility_eci here
+gdf = gpd.read_file("/data/WorldBank/guadalajara_agebs_zm.geojson")
+if gdf.crs != 'epsg:4326':
+    gdf = gdf.to_crs(epsg=4326)
+
+print(list(gdf.columns))
+
+gdf[["CVEGEO", "POBTOT", "geometry"]].rename(columns={"CVEGEO": "geomid",
+                                                      "POBTOT": "population"}
+                                              ).to_file(
+    "../../data/intermediate/geometries/guadalajara_agebs_zm.geojson",
+    driver='GeoJSON')

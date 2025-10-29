@@ -40,7 +40,9 @@ def create_spatial_index(gdf):
 
 def get_od(area = "cdmx",
            output_dir="../../data/intermediate/od_pairs/",
+           output_file=None,
            geom_dir="../../data/intermediate/geometries/",
+           geom_file=None,
            geom_columns=["geomid", "geometry", "population"],
            mobility_dir="/data/Berkeley/",
            spark = spark):
@@ -49,12 +51,16 @@ def get_od(area = "cdmx",
 
     area_dict = {"cdmx": "MX", "guadalajara": "MX"}
 
-    gdf = gpd.read_file(os.path.join(geom_dir, f"{area}_geometries.geojson"),
+    if geom_file is None:
+        geom_file = f"{area}_geometries.geojson"
+
+    gdf = gpd.read_file(os.path.join(geom_dir, geom_file),
                         columns=geom_columns)
 
     bbox = gdf.total_bounds
 
-    mobility_path = os.path.join(mobility_dir, area_dict[area], "large_quadrant", "relaxed")
+    mobility_path = os.path.join(mobility_dir, area_dict[area], "large_quadrant", area_dict[area])
+    #  mobility_path = os.path.join(mobility_dir, area_dict[area], "large_quadrant", "relaxed")
     mob = spark.read.parquet(os.path.join(mobility_path, "*.parquet"))
 
     mob = mob.filter(col("home_latitude").isNotNull() & col("work_latitude").isNotNull())
@@ -136,7 +142,11 @@ def get_od(area = "cdmx",
     od_pairs.loc[:, 'home_population'] = od_pairs['home_population'].astype(int)
     od_pairs.loc[:, 'work_population'] = od_pairs['work_population'].astype(int)
 
-    output_file = output_dir / f"{area}_od_geomid.csv"
+    if output_file is None:
+        output_file = output_dir / f"{area}_od_geomid.csv"
+    else:
+        output_file = output_dir / output_file
+
     od_pairs.to_csv(output_file, index=False)
     spark.stop()
     print(f"Saved {len(od_pairs)} workers data to {output_file}")
