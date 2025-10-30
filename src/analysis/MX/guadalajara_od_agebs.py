@@ -9,8 +9,8 @@ def round_to_nearest_10(x):
     return np.round(x / 5) * 5
 
 #%%
-df = pd.read_csv("../../data/intermediate/od_pairs/cdmx_agebs.csv", dtype={"home_geomid": str, "work_geomid": str})
-gdf = gpd.read_file("../../data/intermediate/geometries/cdmx_agebs_zm.geojson")# %%
+df = pd.read_csv("../../../data/intermediate/od_pairs/guadalajara_agebs.csv", dtype={"home_geomid": str, "work_geomid": str})
+gdf = gpd.read_file("../../../data/intermediate/geometries/guadalajara_agebs_zm.geojson")# %%
 users = df.groupby("home_geomid")["count_uid"].sum().reset_index()
 
 # %%
@@ -33,15 +33,13 @@ plt.ylabel('P(ef)')
 plt.show()
 
 # %%
-population.query("expansion < 200").plot(column="expansion", cmap="OrRd", legend=True)
+population.query("expansion < 100").plot(column="expansion", cmap="OrRd", legend=True, norm=plt.matplotlib.colors.LogNorm())
 
 # %%
-population.query("expansion < 100").plot(column="population", cmap="OrRd", legend=True)
+population.query("expansion < 100").plot(column="population", cmap="OrRd", legend=True, norm=plt.matplotlib.colors.LogNorm())
 
 # %%
-population.query("expansion > 1").plot(column="count_uid", cmap="OrRd", legend=True)
-
-
+population.query("expansion < 100").plot(column="count_uid", cmap="OrRd", legend=True, norm=plt.matplotlib.colors.LogNorm())
 
 
 # %%
@@ -49,11 +47,11 @@ population['scaled_users'] = population['count_uid'] * population['expansion']
 
 # %%
 plt.figure(figsize=(10, 10))
-sns.scatterplot(data=population.query("count_uid > 5"), x='count_uid', y='population', color="blue")
-sns.scatterplot(data=population.query("count_uid > 5"), x='scaled_users', y='population', color="red")
+sns.scatterplot(data=population, x='count_uid', y='population', color="blue")
+sns.scatterplot(data=population, x='scaled_users', y='population', color="red")
 # Add identity line
-min_val = min(population.query("count_uid > 5")['count_uid'].min(), population.query("count_uid > 5")['population'].min())
-max_val = max(population.query("count_uid > 5")['count_uid'].max(), population.query("count_uid > 5")['population'].max())
+min_val = min(population['count_uid'].min(), population['population'].min())
+max_val = max(population['count_uid'].max(), population['population'].max())
 identity_line = np.linspace(min_val, max_val, 100)
 plt.plot(identity_line, identity_line, 'r--', label='Identity Line')
 
@@ -65,8 +63,6 @@ plt.xlabel('Unique Users')
 plt.legend()
 plt.show()
 
-# %%
-population
 
 # %%
 hw_u = df.dropna(subset=["home_geomid", "work_geomid"])#.drop_duplicates(subset=["count_uid"])
@@ -99,11 +95,4 @@ plt.title('Heatmap of Home and Work Geomid')
 plt.xlabel('Work Geomid')
 plt.ylabel('Home Geomid')
 plt.show()
-
-# With the survey
-
 # %%
-long_df = pivot_df.reset_index().melt(id_vars='home_geomid', var_name='work_geomid', value_name='counts')
-both_long = pd.merge(long_df, long_df, on=["home_Distrito", "work_Distrito"], suffixes=("_lbs", "_eod"))
-intra = both_long[both_long["home_Distrito"] == both_long["work_Distrito"]]
-inter = both_long[both_long["home_Distrito"] != both_long["work_Distrito"]]

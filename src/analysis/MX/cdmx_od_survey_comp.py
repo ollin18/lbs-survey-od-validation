@@ -9,8 +9,8 @@ def round_to_nearest_10(x):
     return np.round(x / 5) * 5
 
 #%%
-df = pd.read_csv("../../data/intermediate/od_pairs/cdmx_od_geomid.csv", dtype={"home_geomid": str, "work_geomid": str})
-gdf = gpd.read_file("../../data/intermediate/geometries/cdmx_geometries.geojson")# %%
+df = pd.read_csv("../../../data/intermediate/od_pairs/cdmx_od_geomid.csv", dtype={"home_geomid": str, "work_geomid": str})
+gdf = gpd.read_file("../../../data/intermediate/geometries/cdmx_geometries.geojson")# %%
 users = df.groupby("home_geomid")["count_uid"].sum().reset_index()
 
 # %%
@@ -31,17 +31,20 @@ plt.title('Probability Distribution of Expansionf')
 plt.xlabel('Expansion Factor')
 plt.ylabel('P(ef)')
 plt.show()
+# Save figure
+plt.savefig("../../../figures/cdmx/district_expansion_factor_distribution.png", dpi=300)
 
 # %%
 population.plot(column="expansion", cmap="OrRd", legend=True)
+plt.savefig("../../../figures/cdmx/district_expansion_factor_map.png", dpi=300)
 
 # %%
 population.plot(column="population", cmap="OrRd", legend=True)
+plt.savefig("../../../figures/cdmx/district_population_map.png", dpi=300)
 
 # %%
 population.plot(column="count_uid", cmap="OrRd", legend=True)
-
-
+plt.savefig("../../../figures/cdmx/district_lbs_uid_map.png", dpi=300)
 
 
 # %%
@@ -63,11 +66,12 @@ plt.yscale('log')
 plt.ylabel('Total Population')
 plt.xlabel('Unique Users')
 plt.legend()
+plt.savefig("../../../figures/cdmx/district_scaled_population_scatter.png", dpi=300)
 plt.show()
 
 
 # %%
-hw_u = df.dropna(subset=["home_geomid", "work_geomid"])#.drop_duplicates(subset=["count_uid"])
+hw_u = df.dropna(subset=["home_geomid", "work_geomid"])
 hw_u = pd.merge(hw_u, population[["geomid", "expansion"]], left_on="home_geomid", right_on="geomid", how="left").rename(columns={"expansion": "home_expansion"}).drop(columns=["geomid"])
 hw_u = pd.merge(hw_u, population[["geomid", "expansion"]], left_on="work_geomid", right_on="geomid", how="left").rename(columns={"expansion": "work_expansion"}).drop(columns=["geomid"])
 hw_u = hw_u[["count_uid", "home_geomid", "work_geomid", "home_expansion"]]
@@ -88,6 +92,7 @@ if '0' in wide_lbs_od.index:
 if '0' in wide_lbs_od.columns:
     wide_lbs_od = wide_lbs_od.drop(columns=['0'])
 wide_lbs_od
+
 # %%
 plt.figure(figsize=(12, 10))
 sns.heatmap(wide_lbs_od, cmap='magma', linewidths=0, norm=plt.matplotlib.colors.LogNorm())
@@ -95,11 +100,12 @@ sns.heatmap(wide_lbs_od, cmap='magma', linewidths=0, norm=plt.matplotlib.colors.
 plt.title('LBS Heatmap of Home and Work Geomid - CDMX')
 plt.xlabel('Work Geomid')
 plt.ylabel('Home Geomid')
+plt.savefig("../../../figures/cdmx/district_lbs_OD_heatmap.png", dpi=300)
 plt.show()
 
 # With the survey
 # %%
-survey_od = pd.read_csv("../../data/clean/cdmx/survey/od_matrix.csv", dtype={"home_geomid": str, "work_geomid": str})
+survey_od = pd.read_csv("../../../data/clean/cdmx/survey/od_matrix.csv", dtype={"home_geomid": str, "work_geomid": str})
 wide_survey_od = survey_od.pivot(index='home_geomid', columns='work_geomid', values='counts')
 wide_survey_od = wide_survey_od.reindex(index=full_geomid, columns=full_geomid, fill_value=0).fillna(0)
 if '0' in wide_survey_od.index:
@@ -115,6 +121,8 @@ sns.heatmap(wide_survey_od, cmap='magma', linewidths=0, norm=plt.matplotlib.colo
 plt.title('Survey Heatmap of Home and Work Geomid - CDMX')
 plt.xlabel('Work Geomid')
 plt.ylabel('Home Geomid')
+plt.savefig("../../../figures/cdmx/district_survey_OD_heatmap.png", dpi=300)
+
 plt.show()
 
 
@@ -156,6 +164,7 @@ plt.text(0.05, 0.95, f'Overall: r = {overall_corr:.3f}\nIntra: r = {intra_corr:.
          bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
 
 plt.legend()
+plt.savefig("../../../figures/cdmx/district_lbs_survey_correlation_scatter.png", dpi=300)
 plt.show()
 
 # %%
