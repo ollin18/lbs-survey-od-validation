@@ -86,13 +86,14 @@ def load_hourly_distribution(path: str) -> Dict[int, float]:
     """Load hourly distribution from CSV file.
 
     Args:
-        path: Path to CSV with columns: hour, percentage
+        path: Path to CSV with columns: hour (or start_hour), percentage
 
     Returns:
         Dictionary mapping hour to percentage
     """
     df = pd.read_csv(path)
-    return dict(zip(df['hour'].astype(int), df['percentage']))
+    hour_col = 'hour' if 'hour' in df.columns else 'start_hour'
+    return dict(zip(df[hour_col].astype(int), df['percentage']))
 
 
 def normalize_distribution(dist: Dict[int, float]) -> Dict[int, float]:
@@ -544,14 +545,15 @@ def plot_comparison(
 
     # Prepare survey data
     survey_df = survey_df.copy()
-    survey_df['hour'] = survey_df['hour'].astype(int)
-    survey_df = survey_df.sort_values('hour')
+    hour_col = 'hour' if 'hour' in survey_df.columns else 'start_hour'
+    survey_df[hour_col] = survey_df[hour_col].astype(int)
+    survey_df = survey_df.sort_values(hour_col)
 
     # Align both series on hours 0..23
     hours = np.arange(24)
     y_lbs = np.interp(hours, lbs_df['trip_start_hour'].values,
                      lbs_df['percentage_of_trips'].values)
-    y_survey = np.interp(hours, survey_df['hour'].values,
+    y_survey = np.interp(hours, survey_df[hour_col].values,
                         survey_df['percentage'].values)
 
     # Compute DTW
@@ -577,7 +579,7 @@ def plot_comparison(
     )
 
     ax.plot(
-        survey_df['hour'],
+        survey_df[hour_col],
         survey_df['percentage'],
         marker='s', linewidth=3.5, markersize=9,
         color=color_survey, markerfacecolor=color_survey,
