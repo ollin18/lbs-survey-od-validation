@@ -325,8 +325,11 @@ def process_trips_for_month(
         # For all: no additional filter
         pass
 
-    # Apply filters
-    df_trips = df_with_next.filter(*filter_conditions)
+    # Apply filters - combine all conditions with AND (&)
+    combined_condition = filter_conditions[0]
+    for condition in filter_conditions[1:]:
+        combined_condition = combined_condition & condition
+    df_trips = df_with_next.filter(combined_condition)
 
     # Same day filter
     if trip_filter.same_day_only:
