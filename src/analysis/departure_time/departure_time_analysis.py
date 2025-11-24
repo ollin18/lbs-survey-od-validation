@@ -545,9 +545,23 @@ def plot_comparison(
 
     # Prepare survey data
     survey_df = survey_df.copy()
-    hour_col = 'hour' if 'hour' in survey_df.columns else 'start_hour'
-    survey_df[hour_col] = survey_df[hour_col].astype(int)
-    survey_df = survey_df.sort_values(hour_col)
+    print(f"  Survey data columns: {list(survey_df.columns)}")
+    # Handle both 'hour' and 'start_hour' column names
+    if 'hour' in survey_df.columns:
+        hour_col = 'hour'
+    elif 'start_hour' in survey_df.columns:
+        hour_col = 'start_hour'
+    else:
+        raise ValueError(f"Survey data must have 'hour' or 'start_hour' column. Found: {list(survey_df.columns)}")
+    print(f"  Using hour column: '{hour_col}'")
+
+    try:
+        survey_df[hour_col] = survey_df[hour_col].astype(int)
+        survey_df = survey_df.sort_values(hour_col)
+    except KeyError as e:
+        print(f"  ERROR: KeyError when accessing '{hour_col}': {e}")
+        print(f"  Available columns: {list(survey_df.columns)}")
+        raise
 
     # Align both series on hours 0..23
     hours = np.arange(24)
