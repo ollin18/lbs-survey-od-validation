@@ -1,14 +1,15 @@
 # Departure Time Analysis
 
-A modular, reproducible framework for analyzing departure times from location-based services data.
+A modular, reproducible framework for analyzing departure times from location-based services (LBS) data.
 
 ## Overview
 
-This analysis tool processes trip data to extract departure time patterns and compare them with survey data. It supports:
-- Multiple trip types (Home-Work, Home-Other, Non-Home, All trips)
-- Different sampling strategies (informed/distribution-based, random uniform, raw data)
-- Reusable computations with caching
-- Individual or batch analysis execution
+This analysis tool processes trip data extracted from mobile location data to characterize departure time patterns and validate them against survey data. It supports:
+- **Multiple trip types**: Home-Work (HW), Home-Other (HO), Non-Home (NonH), All trips
+- **Sampling strategies**: Informed (distribution-based), Random uniform, Raw data
+- **Reusable computations**: Caching of processed trips for fast subsequent analyses
+- **Batch execution**: Run single or multiple configurations in sequence
+- **Comparison analysis**: Compare predicted departure times with survey distributions using Dynamic Time Warping (DTW)
 
 ## Structure
 
@@ -243,6 +244,55 @@ First runs are slow because they process all trips. To speed up:
 1. Process fewer months initially (`month_range=(0, 1)`)
 2. Use cached trips for subsequent analyses (don't use `--recompute`)
 3. Adjust `repartition_size` based on your data size
+
+## How It Works
+
+### Data Processing Pipeline
+
+1. **Trip Extraction**: Raw stop data (parquet files) is processed to identify individual trips
+   - Stops are ordered by timestamp
+   - Sequential stops from the same person form a trip
+   - Trip origin and destination are determined by stop location types (H=Home, W=Work, O=Other)
+
+2. **Trip Filtering**: Trips are filtered based on configuration:
+   - **Origin/destination type**: Filter by location type (e.g., only H→W trips)
+   - **Weekday only**: Exclude weekend trips
+   - **Same day only**: Exclude trips spanning multiple days
+   - **First/last selection**: For HW trips, optionally select only first H→W or last W→H per day
+   - **Exclude other**: Remove trips with ambiguous location types
+
+3. **Departure Time Sampling**: The actual departure time is determined based on sampling strategy:
+   - **Raw**: Uses the actual end time of the origin stop
+   - **Random Uniform**: Samples uniformly between origin stop end and destination stop start
+   - **Informed**: Samples from an observed hourly distribution (from survey data)
+     - Maps hourly probabilities to cumulative distribution
+     - Generates departure times matching the survey's temporal patterns
+
+4. **Hourly Aggregation**: Sampled departure times are binned into 24 hourly buckets
+   - Counts trips per hour
+   - Calculates percentages
+   - Generates visualizations
+
+5. **Validation**: Results are compared with survey data using:
+   - **Visual comparison**: Overlaid histograms with correlation metrics
+   - **DTW distance**: Dynamic Time Warping distance measures temporal similarity
+
+### Sampling Strategies Explained
+
+**Informed (Distribution-based)**
+- Uses actual survey data to specify the probability of departing in each hour
+- Best for validating that your synthetic trips match observed behavior
+- Requires a survey distribution file with hourly percentages
+
+**Random Uniform**
+- Treats all departure times as equally likely between origin stop end and destination stop start
+- Provides a baseline that assumes no temporal preferences
+- Useful for comparison to understand how much survey patterns matter
+
+**Raw**
+- Uses the actual end time of the origin stop
+- Reflects only the observed stop timing without additional sampling
+- Most direct but potentially biased by incomplete or noisy location data
 
 ## Migration from Old Scripts
 
