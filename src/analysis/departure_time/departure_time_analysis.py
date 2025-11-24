@@ -714,6 +714,7 @@ def run_analysis(
 
     # Plot comparison with survey if available
     if config.survey_distribution_path:
+        print(f"\nLoading survey distribution from: {config.survey_distribution_path}")
         survey_df = pd.read_csv(config.survey_distribution_path)
         dtw_val, dtw_norm = plot_comparison(result_df, survey_df, config)
     else:

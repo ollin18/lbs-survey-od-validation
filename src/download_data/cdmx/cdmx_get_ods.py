@@ -31,6 +31,6 @@ get_od(area = "cdmx",
         output_dir="../../data/intermediate/od_pairs/",
         geom_dir="../../data/intermediate/geometries/",
         geom_columns=["geomid", "geometry", "population"],
-        mobility_dir="/data/Berkeley/"
+        mobility_dir="/data/Berkeley/",
         spark = spark)
 
