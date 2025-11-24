@@ -20,6 +20,8 @@ try:
 except:
     pass
 
+# I wrote this based on a savio2 setup. If more memory or cores are needed,
+# adjust here.
 spark = (
     SparkSession.builder
     .appName("MobilityAnalysis")
@@ -27,9 +29,10 @@ spark = (
 
     .config("spark.driver.memory", "60g")
     .config("spark.driver.maxResultSize", "20g")
-    .config("spark.executor.memory", "60g")  # In local mode, this is the same as driver
+    .config("spark.executor.memory", "60g")
 
-    .config("spark.local.dir", "/global/scratch/p2p3/pl1_lbs/ollin")
+    .config("spark.local.dir", "/global/scratch/p2p3/pl1_lbs/ollin") # This is
+    #  my scratch space on savio2, please change as needed.
 
     .config("spark.sql.shuffle.partitions", "40")
     .config("spark.default.parallelism", "40")
@@ -37,10 +40,8 @@ spark = (
     .config("spark.sql.adaptive.enabled", "true")
     .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
 
-    # Serialization
     .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
 
-    # Memory fraction for execution vs storage
     .config("spark.memory.fraction", "0.8")
     .config("spark.memory.storageFraction", "0.3")
 
@@ -85,7 +86,6 @@ hour_dist = hour_dist.rename(columns={"start_hour":"hour"})
 HBW_WEEKDAY_DIST = dict(zip(hour_dist['hour'], hour_dist['percentage']))
 
 
-# Normalize to sum to 1.0
 total = sum(HBW_WEEKDAY_DIST.values())
 HBW_DIST_NORM = {k: v/total for k, v in HBW_WEEKDAY_DIST.items()}
 
@@ -96,11 +96,9 @@ def sample_departure_time(origin_end_epoch, dest_start_epoch, seed=None):
     if origin_end_epoch is None or dest_start_epoch is None:
         return None
 
-    # Convert to datetime
     origin_end = datetime.fromtimestamp(origin_end_epoch)
     dest_start = datetime.fromtimestamp(dest_start_epoch)
 
-    # Get valid hours in the window
     valid_hours = []
     valid_probs = []
 
@@ -111,31 +109,25 @@ def sample_departure_time(origin_end_epoch, dest_start_epoch, seed=None):
         hour = current.hour
         if current >= origin_end and current <= dest_start:
             valid_hours.append(hour)
-            valid_probs.append(HBW_DIST_NORM.get(hour, 0.01))  # small default prob
+            valid_probs.append(HBW_DIST_NORM.get(hour, 0.01))
         current += timedelta(hours=1)
 
     if not valid_hours:
-        # Fallback to uniform if no valid hours (shouldn't happen)
         return origin_end_epoch + (dest_start_epoch - origin_end_epoch) * np.random.random()
 
-    # Normalize probabilities for valid hours only
     prob_sum = sum(valid_probs)
     if prob_sum > 0:
         valid_probs = [p/prob_sum for p in valid_probs]
     else:
         valid_probs = [1.0/len(valid_hours)] * len(valid_hours)
 
-    # Sample an hour
     sampled_hour = np.random.choice(valid_hours, p=valid_probs)
 
-    # Get timestamp for that hour, sample minute uniformly within the hour
     sampled_dt = origin_end.replace(hour=sampled_hour, minute=0, second=0, microsecond=0)
 
-    # Add random minutes (0-59)
     minute_offset = np.random.randint(0, 60)
     sampled_dt += timedelta(minutes=minute_offset)
 
-    # Ensure it's within bounds
     sampled_epoch = sampled_dt.timestamp()
     if sampled_epoch < origin_end_epoch:
         sampled_epoch = origin_end_epoch
@@ -144,11 +136,7 @@ def sample_departure_time(origin_end_epoch, dest_start_epoch, seed=None):
 
     return sampled_epoch
 
-# Register as UDF
 sample_departure_udf = udf(sample_departure_time, "double")
-
-
-# In[9]:
 
 
 from pyspark.sql import Window
@@ -168,12 +156,11 @@ spark.sparkContext.setCheckpointDir(f"{TEMP_DIR}/_chkpt")
 
 PARQUET_DIR_IN = f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023"
 
-# Column names in your schema
 UID_COL              = "uid"
 ORDER_COL            = "stop_event"
 ORIGIN_END_EPOCH_COL = "end_timestamp"     # epoch seconds (long)
 NEXT_START_EPOCH_COL = "start_timestamp"   # epoch seconds (long) of the NEXT stop
-NEXT_START_TS_COL    = "stop_datetime"     # timestamp of the NEXT stop (not strictly needed now)
+NEXT_START_TS_COL    = "stop_datetime"
 LOC_TYPE_COL         = "location_type"     # 'H', 'W', or other
 WEEKEND_COL          = "weekend"           # boolean
 
@@ -199,7 +186,6 @@ for month_row in months[1:3]:  # replace with "months" to process all
     month = month_row['month']
     print(f"\n{'='*60}\nProcessing month {month}...\n{'='*60}")
 
-    # Repartition for parallelism and persist to avoid recomputation
     df_month = (
         df_clean
         .filter(col("month") == month)
@@ -208,10 +194,8 @@ for month_row in months[1:3]:  # replace with "months" to process all
     )
     print(f"Rows in month {month}: {df_month.count():,}")
 
-    # Window by UID in time order
     w = Window.partitionBy(UID_COL).orderBy(ORDER_COL)
 
-    # Add next-stop info we need
     df_with_next = (
         df_month
         .withColumn("next_cluster_label", F.lead("cluster_label").over(w))
@@ -220,31 +204,20 @@ for month_row in months[1:3]:  # replace with "months" to process all
         .withColumn("dest_weekend",       F.lead(col(WEEKEND_COL)).over(w))            # boolean
     )
 
-    # Real moves (cluster changes), weekday only, H/W at origin OR destination,
-    # valid timestamps with positive interval, and same calendar day
     df_trips = (
         df_with_next
         .filter(
             (col("next_cluster_label").isNotNull()) &
             (col("cluster_label") != col("next_cluster_label")) &
-            # weekday only
             (col(WEEKEND_COL) == F.lit(False)) &
             (col("dest_weekend") == F.lit(False)) &
-            # HBW trips: H->W or W->H
-            # (
-            #     ((col(LOC_TYPE_COL) == "H") & (col("dest_location_type") == "O")) |
-            #     ((col(LOC_TYPE_COL) == "O") & (col("dest_location_type") == "H"))
-            # ) &
-            # valid epochs
             col(ORIGIN_END_EPOCH_COL).isNotNull() &
             col("dest_start_epoch").isNotNull() &
             (col("dest_start_epoch") > col(ORIGIN_END_EPOCH_COL))
         )
-        # same calendar day
         .withColumn("origin_end_date", F.to_date(F.from_unixtime(col(ORIGIN_END_EPOCH_COL))))
         .withColumn("dest_start_date", F.to_date(F.from_unixtime(col("dest_start_epoch"))))
         .filter(col("origin_end_date") == col("dest_start_date"))
-        # Sample departure time using NHTS distribution
         .withColumn(
             "rand_start_epoch",
             sample_departure_udf(col(ORIGIN_END_EPOCH_COL), col("dest_start_epoch"))
@@ -256,27 +229,12 @@ for month_row in months[1:3]:  # replace with "months" to process all
     w_first_hw = Window.partitionBy(UID_COL, "origin_end_date").orderBy("rand_start_epoch")
     w_last_wh = Window.partitionBy(UID_COL, "origin_end_date").orderBy(col("rand_start_epoch").desc())
 
-    # df_trips = (
-    #     df_trips
-    #     .withColumn("trip_direction",
-    #         F.when(col(LOC_TYPE_COL) == "H", "H_to_W").otherwise("W_to_H"))
-    #     .withColumn("rn_hw",
-    #         F.when(col("trip_direction") == "H_to_W", row_number().over(w_first_hw)).otherwise(999))
-    #     .withColumn("rn_wh",
-    #         F.when(col("trip_direction") == "W_to_H", row_number().over(w_last_wh)).otherwise(999))
-    #     .filter((col("rn_hw") == 1) | (col("rn_wh") == 1))
-    #     .drop("rn_hw", "rn_wh", "trip_direction")
-    # )
-
-
-    # Keep only what you need for downstream aggregation
     df_trips_slim = (
         df_trips
         .select(UID_COL, "rand_start_ts", "trip_start_hour")
         .withColumn("month", lit(month))
     )
 
-    # Materialize once, then count + write from the same persisted DF
     df_trips_slim = df_trips_slim.persist(StorageLevel.DISK_ONLY)
     trips_in_month = df_trips_slim.count()
     print(f"Same-day WEEKDAY trips (H/W at origin OR destination) in month {month}: {trips_in_month:,}")
@@ -286,7 +244,7 @@ for month_row in months[1:3]:  # replace with "months" to process all
         .write
         .mode("append")
         .option("compression", "snappy")
-        .option("maxRecordsPerFile", 5_000_000)  # tune if needed
+        .option("maxRecordsPerFile", 5_000_000)
         .partitionBy("month")
         .parquet(f"{TEMP_DIR}/trips"))
 
@@ -294,32 +252,25 @@ for month_row in months[1:3]:  # replace with "months" to process all
     df_month.unpersist()
 
 
-# In[10]:
-
-
 from pyspark.sql import Window
 from pyspark.sql.functions import col, lead, hour, count, lit, round as spark_round
 from pyspark.storagelevel import StorageLevel
 # TEMP_DIR = f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_informed/{country}_2023"
 
-country = "MX"  # or whatever you're using
-# Read all trips from intermediate files
+country = "MX"
 df_all_trips = spark.read.parquet(f"{TEMP_DIR}/trips")
 
 total_trips = df_all_trips.count()
 print(f"\nTotal trips across all months: {total_trips:,}")
 
-# Count trips by hour
 trips_by_hour = df_all_trips.groupBy("trip_start_hour") \
     .agg(count("*").alias("trip_count"))
 
-# Calculate percentages
 trips_by_hour = trips_by_hour.withColumn(
     "percentage_of_trips",
     spark_round((col("trip_count") / lit(total_trips)) * 100, 2)
 )
 
-# Ensure all hours 0-23 are present
 from pyspark.sql.types import IntegerType
 
 hours_df = spark.createDataFrame([(i,) for i in range(24)], ["trip_start_hour"])
@@ -329,24 +280,14 @@ result_complete = hours_df.join(
     how="left"
 ).fillna(0).orderBy("trip_start_hour")
 
-# Show results
 print("\nTrips by Hour:")
 result_complete.show(24)
-
-
-# In[11]:
 
 
 result_pandas = result_complete.toPandas()
 
 
-# In[12]:
-
-
 result_pandas["percentage_of_trips"] = (result_pandas["trip_count"]/result_pandas["trip_count"].sum())*100
-
-
-# In[13]:
 
 
 import matplotlib.pyplot as plt

@@ -1,14 +1,5 @@
 #!/usr/bin/env python
 """
-Runner script for departure time analysis.
-
-This script provides a convenient interface for running departure time analyses
-with different configurations. It supports:
-- Running individual analyses
-- Running multiple analyses in sequence
-- Recomputing trips or using cached results
-- Custom configurations
-
 Usage:
     # Run a single analysis
     python run_analysis.py --config HW_informed
@@ -153,7 +144,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Handle --list
     if args.list:
         print("\nAvailable configurations:")
         print("=" * 60)
@@ -172,7 +162,6 @@ def main():
         print("\n")
         return
 
-    # Determine which configurations to run
     if args.all:
         configs_to_run = list_configs()
     elif args.config:
@@ -180,7 +169,6 @@ def main():
     else:
         parser.error("Must specify either --config, --all, or --list")
 
-    # Validate configurations
     invalid_configs = [c for c in configs_to_run if c not in CONFIGS]
     if invalid_configs:
         print(f"Error: Unknown configuration(s): {', '.join(invalid_configs)}")
@@ -188,7 +176,6 @@ def main():
         print("Use --list to see details")
         sys.exit(1)
 
-    # Run analyses
     if len(configs_to_run) == 1:
         success = run_single_analysis(configs_to_run[0], args.country, args.recompute)
         sys.exit(0 if success else 1)

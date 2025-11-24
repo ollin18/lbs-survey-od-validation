@@ -37,20 +37,15 @@ class SparkConfig:
 @dataclass
 class TripFilterConfig:
     """Configuration for filtering trips by type."""
-    # Location type filters
     origin_types: Optional[List[str]] = None  # e.g., ['H'], ['W'], None for all
     dest_types: Optional[List[str]] = None    # e.g., ['W'], ['H'], None for all
 
-    # Weekend filter
     weekday_only: bool = True
 
-    # Exclude 'O' (Other) location type
     exclude_other: bool = True
 
-    # Same day only
     same_day_only: bool = True
 
-    # Trip selection (first/last of day)
     select_first_hw: bool = False  # First H->W trip of the day
     select_last_wh: bool = False   # Last W->H trip of the day
 
@@ -66,16 +61,16 @@ class SamplingConfig:
     distribution_path: Optional[str] = None
 
     # Distribution dict (alternative to file, for 'informed' strategy)
+    # This allows to directly specify the distribution in code if we don't have
+    # a file
     distribution_dict: Optional[Dict[int, float]] = None
 
 
 @dataclass
 class AnalysisConfig:
     """Complete configuration for a departure time analysis."""
-    # Analysis identifier
     name: str
 
-    # Input/Output paths
     country: str
     parquet_dir_in: str
     temp_dir: str
@@ -87,16 +82,13 @@ class AnalysisConfig:
     # Month range to process
     month_range: Optional[Tuple[int, int]] = None  # e.g., (1, 3) for months[1:3], None for all
 
-    # Configuration components
     spark_config: SparkConfig = None
     trip_filter: TripFilterConfig = None
     sampling: SamplingConfig = None
 
-    # Processing parameters
     repartition_size: int = 200
     max_records_per_file: int = 5_000_000
 
-    # Plotting parameters
     figure_dpi: int = 300
     plot_title_suffix: str = ""
 

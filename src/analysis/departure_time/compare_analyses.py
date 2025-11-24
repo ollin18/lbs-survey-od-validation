@@ -81,7 +81,6 @@ def plot_comparison(
         survey_path: Path to survey distribution CSV
         figsize: Figure size
     """
-    # Set up color palette
     n_configs = len(results)
     if include_survey and survey_path:
         n_configs += 1
@@ -91,7 +90,6 @@ def plot_comparison(
     plt.figure(figsize=figsize)
     ax = plt.gca()
 
-    # Plot each configuration
     for i, (config_name, df) in enumerate(results.items()):
         ax.plot(
             df['trip_start_hour'],
@@ -107,7 +105,6 @@ def plot_comparison(
             alpha=0.8
         )
 
-    # Plot survey data if available
     if include_survey and survey_path and Path(survey_path).exists():
         survey_df = pd.read_csv(survey_path)
         ax.plot(
@@ -125,7 +122,6 @@ def plot_comparison(
             linestyle='--'
         )
 
-    # Formatting
     ax.set_xlabel('Hour of Day', fontsize=16, fontweight='bold', labelpad=10)
     ax.set_ylabel('Percentage of Trips (%)', fontsize=16, fontweight='bold', labelpad=10)
     ax.set_title(f'{title} - {country.upper()}', fontsize=20, fontweight='bold', pad=20)
@@ -134,10 +130,8 @@ def plot_comparison(
     ax.set_xticks(range(0, 24, 1))
     ax.tick_params(axis='both', labelsize=13)
 
-    # Legend
     ax.legend(loc='best', frameon=True, fontsize=12, title='Configuration', title_fontsize=13)
 
-    # Grid and aesthetics
     ax.grid(True, alpha=0.35, linestyle='--', linewidth=0.8)
     ax.set_axisbelow(True)
     ax.set_facecolor('#FAFAFA')
@@ -168,7 +162,6 @@ def plot_heatmap_comparison(
         output_path: Path to save figure
         country: Country code
     """
-    # Prepare data matrix
     hours = range(24)
     data = []
     labels = []
@@ -179,27 +172,22 @@ def plot_heatmap_comparison(
 
     data_matrix = np.array(data)
 
-    # Create heatmap
     fig, ax = plt.subplots(figsize=(14, len(labels) * 0.8 + 2))
 
     im = ax.imshow(data_matrix, cmap='YlOrRd', aspect='auto')
 
-    # Set ticks
     ax.set_xticks(range(24))
     ax.set_xticklabels(range(24))
     ax.set_yticks(range(len(labels)))
     ax.set_yticklabels(labels)
 
-    # Labels
     ax.set_xlabel('Hour of Day', fontsize=14, fontweight='bold')
     ax.set_ylabel('Configuration', fontsize=14, fontweight='bold')
     ax.set_title(f'{title} - {country.upper()}', fontsize=16, fontweight='bold', pad=15)
 
-    # Colorbar
     cbar = plt.colorbar(im, ax=ax)
     cbar.set_label('Percentage of Trips (%)', rotation=270, labelpad=20, fontsize=12, fontweight='bold')
 
-    # Add text annotations
     for i in range(len(labels)):
         for j in range(24):
             text = ax.text(j, i, f'{data_matrix[i, j]:.1f}',
@@ -227,14 +215,11 @@ def compute_statistics(results: dict) -> pd.DataFrame:
         pct = df['percentage_of_trips'].values
         hours = df['trip_start_hour'].values
 
-        # Weighted mean hour
         mean_hour = np.average(hours, weights=pct)
 
-        # Peak hour
         peak_hour = hours[np.argmax(pct)]
         peak_pct = np.max(pct)
 
-        # Standard deviation
         std_hour = np.sqrt(np.average((hours - mean_hour)**2, weights=pct))
 
         stats.append({
@@ -312,7 +297,6 @@ def main():
 
     args = parser.parse_args()
 
-    # Load results
     print(f"Loading results for: {', '.join(args.configs)}")
     results = {}
     for config_name in args.configs:
@@ -329,7 +313,6 @@ def main():
         print(f"  python run_analysis.py --config {' '.join(args.configs)}")
         return
 
-    # Generate comparison plot
     print("\nGenerating comparison plot...")
     plot_comparison(
         results,
@@ -340,13 +323,11 @@ def main():
         survey_path=args.survey_path if not args.no_survey else None
     )
 
-    # Generate heatmap if requested
     if args.heatmap:
         print("Generating heatmap...")
         heatmap_path = args.output.replace('.png', '_heatmap.png')
         plot_heatmap_comparison(results, args.title, heatmap_path, args.country)
 
-    # Print statistics if requested
     if args.stats:
         print("\nComparison Statistics:")
         print("=" * 80)
@@ -354,7 +335,6 @@ def main():
         print(stats_df.to_string(index=False))
         print("=" * 80)
 
-        # Save statistics
         stats_path = args.output.replace('.png', '_stats.csv')
         stats_df.to_csv(stats_path, index=False)
         print(f"Statistics saved to: {stats_path}")
