@@ -7,12 +7,8 @@ Then run: python your_config.py
 
 from od_survey_analysis import AnalysisConfig, run_analysis
 
-# =============================================================================
-# MODIFY THESE PARAMETERS FOR YOUR CITY
-# =============================================================================
 
 config = AnalysisConfig(
-    # City name (used in figure titles)
     city_name="your_city_name",
 
     # Path to OD pairs CSV file
@@ -32,13 +28,14 @@ config = AnalysisConfig(
     # Output directory for figures
     output_dir="../../figures/your_city",
 
-    # Optional parameters (can be omitted to use defaults)
+    # Optional parameters. These have default values but can be adjusted as
+    # needed.
     rounding_factor=5,    # Factor for rounding expansion factors
     figure_dpi=300        # DPI for saved figures
 )
 
 # =============================================================================
-# RUN ANALYSIS
+# how to run
 # =============================================================================
 
 #  if __name__ == "__main__":
@@ -46,7 +43,7 @@ config = AnalysisConfig(
 
 
 # =============================================================================
-# EXAMPLES FOR SPECIFIC CITIES
+# These are some examples of configuration functions for different cities.
 # =============================================================================
 
 def cdmx_config():
@@ -97,6 +94,17 @@ def guadalajara_ageb():
         figure_dpi=300
     )
 
+def guadalajara_od():
+    """Configuration for Guadalajara AGEB level analysis"""
+    return AnalysisConfig(
+        city_name="Guadalajara",
+        od_data_path="../../data/intermediate/od_pairs/guadalajara_od_geomid.csv",
+        geometry_path="../../data/intermediate/geometries/guadalajara_geometries.geojson",
+        survey_od_path=None,
+        output_dir="../../figures/guadalajara",
+        rounding_factor=5,
+        figure_dpi=300
+    )
 
 # Uncomment and run this to use CDMX configuration:
 # if __name__ == "__main__":

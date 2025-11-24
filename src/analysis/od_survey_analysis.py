@@ -605,7 +605,6 @@ Examples:
         print("Using default CDMX configuration...")
         config = create_config_for_cdmx()
 
-        # Override with any provided arguments
         if args.od_data:
             config.od_data_path = args.od_data
         if args.geometry:
@@ -615,7 +614,6 @@ Examples:
         if args.output_dir:
             config.output_dir = args.output_dir
     else:
-        # Require required paths for other cities (survey is optional)
         if not all([args.od_data, args.geometry, args.output_dir]):
             parser.error(
                 "For cities other than CDMX, you must provide: "

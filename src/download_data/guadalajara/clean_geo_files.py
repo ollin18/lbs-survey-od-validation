@@ -16,8 +16,8 @@ pop = gpd.read_file(os.path.join(raw_dir, "habitantes_vivienda", "amg_habitantes
 
 # Dictionary names
 names_dict = {
-    "numero_de_": "geomid",
-    "nombre_de_": "geom_name",
+    "zona_de_or": "home_geomid",
+    "zona_de_de": "work_geomid",
     "habitantes": "population"
 }
 
@@ -28,5 +28,6 @@ gdf = gdf[["geomid", "geom_name", "geometry"]]
 pop = pop[["geomid", "geom_name", "population", "geometry"]]
 
 intermediate_dir = os.path.join(data_dir, "intermediate", "geometries")
+pop.to_crs(epsg=4326, inplace=True)
 pop.to_file(os.path.join(intermediate_dir, "guadalajara_geometries.geojson"),
             driver="GeoJSON")
