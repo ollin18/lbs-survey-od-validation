@@ -72,6 +72,7 @@ class AnalysisConfig:
     name: str
 
     country: str
+    city: str  # City name for figure paths (e.g., 'cdmx', 'guadalajara')
     parquet_dir_in: str
     temp_dir: str
     output_dir: str
@@ -109,15 +110,16 @@ class AnalysisConfig:
 # PREDEFINED CONFIGURATIONS
 # =============================================================================
 
-def hw_informed_config(country: str = "MX") -> AnalysisConfig:
+def hw_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """Home-to-Work trips with informed sampling (Informed distribution)."""
     return AnalysisConfig(
         name="HW_informed",
         country=country,
+        city=city,
         parquet_dir_in=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023",
         temp_dir=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_informed/{country}_2023",
-        output_dir=f"../../../figures/{country}/departure_time/HW_informed",
-        survey_distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv",
+        output_dir=f"../../../figures/{city}/departure_time/HW_informed",
+        survey_distribution_path=f"../../../data/clean/{city}/survey/hw_trips_by_hour.csv",
         month_range=None,  # Process all available months
         trip_filter=TripFilterConfig(
             origin_types=['H'],
@@ -130,21 +132,22 @@ def hw_informed_config(country: str = "MX") -> AnalysisConfig:
         ),
         sampling=SamplingConfig(
             strategy="informed",
-            distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv"
+            distribution_path=f"../../../data/clean/{city}/survey/hw_trips_by_hour.csv"
         ),
         plot_title_suffix="Informed"
     )
 
 
-def hw_random_uniform_config(country: str = "MX") -> AnalysisConfig:
+def hw_random_uniform_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """Home-to-Work trips with random uniform sampling."""
     return AnalysisConfig(
         name="HW_random_uniform",
         country=country,
+        city=city,
         parquet_dir_in=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023",
         temp_dir=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_random_uniform/{country}_2023",
-        output_dir=f"../../../figures/{country}/departure_time/HW_random_uniform",
-        survey_distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv",
+        output_dir=f"../../../figures/{city}/departure_time/HW_random_uniform",
+        survey_distribution_path=f"../../../data/clean/{city}/survey/hw_trips_by_hour.csv",
         month_range=None,
         trip_filter=TripFilterConfig(
             origin_types=['H'],
@@ -162,15 +165,16 @@ def hw_random_uniform_config(country: str = "MX") -> AnalysisConfig:
     )
 
 
-def hw_raw_config(country: str = "MX") -> AnalysisConfig:
+def hw_raw_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """Home-to-Work trips with raw data (no sampling)."""
     return AnalysisConfig(
         name="HW_raw",
         country=country,
+        city=city,
         parquet_dir_in=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023",
         temp_dir=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_raw/{country}_2023",
-        output_dir=f"../../../figures/{country}/departure_time/HW_raw",
-        survey_distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv",
+        output_dir=f"../../../figures/{city}/departure_time/HW_raw",
+        survey_distribution_path=f"../../../data/clean/{city}/survey/hw_trips_by_hour.csv",
         month_range=None,
         trip_filter=TripFilterConfig(
             origin_types=['H'],
@@ -188,15 +192,16 @@ def hw_raw_config(country: str = "MX") -> AnalysisConfig:
     )
 
 
-def ho_informed_config(country: str = "MX") -> AnalysisConfig:
+def ho_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """Home-to-Other trips with informed sampling."""
     return AnalysisConfig(
         name="HO_informed",
         country=country,
+        city=city,
         parquet_dir_in=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023",
         temp_dir=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_informed_HO/{country}_2023",
-        output_dir=f"../../../figures/{country}/departure_time/HO_informed",
-        survey_distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv",
+        output_dir=f"../../../figures/{city}/departure_time/HO_informed",
+        survey_distribution_path=f"../../../data/clean/{city}/survey/ho_trips_by_hour.csv",
         month_range=None,
         trip_filter=TripFilterConfig(
             origin_types=['H'],
@@ -209,21 +214,22 @@ def ho_informed_config(country: str = "MX") -> AnalysisConfig:
         ),
         sampling=SamplingConfig(
             strategy="informed",
-            distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv"
+            distribution_path=f"../../../data/clean/{city}/survey/ho_trips_by_hour.csv"
         ),
         plot_title_suffix="Home-to-Other - Informed"
     )
 
 
-def nonh_informed_config(country: str = "MX") -> AnalysisConfig:
+def nonh_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """Non-Home trips with informed sampling."""
     return AnalysisConfig(
         name="nonH_informed",
         country=country,
+        city=city,
         parquet_dir_in=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023",
         temp_dir=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_informed_nonH/{country}_2023",
-        output_dir=f"../../../figures/{country}/departure_time/nonH_informed",
-        survey_distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv",
+        output_dir=f"../../../figures/{city}/departure_time/nonH_informed",
+        survey_distribution_path=f"../../../data/clean/{city}/survey/nhb_trips_by_hour.csv",
         month_range=None,
         trip_filter=TripFilterConfig(
             origin_types=None,  # Any origin except Home
@@ -236,21 +242,22 @@ def nonh_informed_config(country: str = "MX") -> AnalysisConfig:
         ),
         sampling=SamplingConfig(
             strategy="informed",
-            distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv"
+            distribution_path=f"../../../data/clean/{city}/survey/nhb_trips_by_hour.csv"
         ),
         plot_title_suffix="Non-Home - Informed"
     )
 
 
-def all_informed_config(country: str = "MX") -> AnalysisConfig:
+def all_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """All trips with informed sampling."""
     return AnalysisConfig(
         name="all_informed",
         country=country,
+        city=city,
         parquet_dir_in=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/stops_test/{country}_2023",
         temp_dir=f"/global/scratch/p2p3/pl1_lbs/data/quadrant/temp_trips_informed_all/{country}_2023",
-        output_dir=f"../../../figures/{country}/departure_time/all_informed",
-        survey_distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv",
+        output_dir=f"../../../figures/{city}/departure_time/all_informed",
+        survey_distribution_path=f"../../../data/clean/{city}/survey/all_trips_by_hour.csv",
         month_range=None,
         trip_filter=TripFilterConfig(
             origin_types=None,
@@ -263,7 +270,7 @@ def all_informed_config(country: str = "MX") -> AnalysisConfig:
         ),
         sampling=SamplingConfig(
             strategy="informed",
-            distribution_path="/global/home/users/ollin/test_cuebiq/informed_versions/hw_trips_by_hour.csv"
+            distribution_path=f"../../../data/clean/{city}/survey/all_trips_by_hour.csv"
         ),
         plot_title_suffix="All Trips - Informed"
     )
@@ -283,12 +290,13 @@ CONFIGS = {
 }
 
 
-def get_config(name: str, country: str = "MX") -> AnalysisConfig:
+def get_config(name: str, country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
     """Get a predefined configuration by name.
 
     Args:
         name: Configuration name (e.g., 'HW_informed', 'HW_random_uniform', 'HW_raw')
         country: Country code (default: 'MX')
+        city: City code for figure paths (default: 'cdmx')
 
     Returns:
         AnalysisConfig object
@@ -300,7 +308,7 @@ def get_config(name: str, country: str = "MX") -> AnalysisConfig:
         available = ", ".join(CONFIGS.keys())
         raise ValueError(f"Unknown configuration: {name}. Available: {available}")
 
-    return CONFIGS[name](country=country)
+    return CONFIGS[name](country=country, city=city)
 
 
 def list_configs() -> List[str]:

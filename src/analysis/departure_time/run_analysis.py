@@ -39,12 +39,13 @@ from config_template import get_config, list_configs, CONFIGS
 from departure_time_analysis import run_analysis
 
 
-def run_single_analysis(config_name: str, country: str, recompute: bool) -> bool:
+def run_single_analysis(config_name: str, country: str, city: str, recompute: bool) -> bool:
     """Run a single analysis configuration.
 
     Args:
         config_name: Name of configuration to run
         country: Country code
+        city: City code for figure paths
         recompute: Whether to recompute trips
 
     Returns:
@@ -52,10 +53,10 @@ def run_single_analysis(config_name: str, country: str, recompute: bool) -> bool
     """
     try:
         print(f"\n{'#'*80}")
-        print(f"# Running analysis: {config_name}")
+        print(f"# Running analysis: {config_name} ({city})")
         print(f"{'#'*80}\n")
 
-        config = get_config(config_name, country=country)
+        config = get_config(config_name, country=country, city=city)
         run_analysis(config, recompute_trips=recompute)
 
         return True
@@ -70,6 +71,7 @@ def run_single_analysis(config_name: str, country: str, recompute: bool) -> bool
 def run_multiple_analyses(
     config_names: List[str],
     country: str,
+    city: str,
     recompute: bool
 ) -> None:
     """Run multiple analyses in sequence.
@@ -77,17 +79,18 @@ def run_multiple_analyses(
     Args:
         config_names: List of configuration names
         country: Country code
+        city: City code for figure paths
         recompute: Whether to recompute trips
     """
     results = {}
 
     print(f"\n{'='*80}")
-    print(f"Running {len(config_names)} analyses for {country}")
+    print(f"Running {len(config_names)} analyses for {country} ({city})")
     print(f"Configurations: {', '.join(config_names)}")
     print(f"{'='*80}\n")
 
     for config_name in config_names:
-        success = run_single_analysis(config_name, country, recompute)
+        success = run_single_analysis(config_name, country, city, recompute)
         results[config_name] = "SUCCESS" if success else "FAILED"
 
     # Print summary
@@ -137,6 +140,12 @@ def main():
     )
 
     parser.add_argument(
+        "--city",
+        default="cdmx",
+        help="City code for figure paths (default: cdmx). Examples: cdmx, guadalajara"
+    )
+
+    parser.add_argument(
         "--recompute",
         action="store_true",
         help="Force recomputation of trips (don't use cached results)"
@@ -148,7 +157,7 @@ def main():
         print("\nAvailable configurations:")
         print("=" * 60)
         for config_name in list_configs():
-            config = get_config(config_name, country=args.country)
+            config = get_config(config_name, country=args.country, city=args.city)
             print(f"\n{config_name}:")
             print(f"  Sampling: {config.sampling.strategy}")
             if config.trip_filter.origin_types and config.trip_filter.dest_types:
@@ -177,10 +186,10 @@ def main():
         sys.exit(1)
 
     if len(configs_to_run) == 1:
-        success = run_single_analysis(configs_to_run[0], args.country, args.recompute)
+        success = run_single_analysis(configs_to_run[0], args.country, args.city, args.recompute)
         sys.exit(0 if success else 1)
     else:
-        run_multiple_analyses(configs_to_run, args.country, args.recompute)
+        run_multiple_analyses(configs_to_run, args.country, args.city, args.recompute)
 
 
 if __name__ == "__main__":
