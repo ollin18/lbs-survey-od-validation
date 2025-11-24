@@ -280,15 +280,15 @@ def process_trips_for_month(
                 else:
                     origin_dest_condition = origin_dest_condition | condition
 
-        # Add reverse direction for bidirectional filters (H->W or W->H)
-        if 'H' in trip_filter.origin_types and 'W' in trip_filter.dest_types:
-            if 'W' in trip_filter.origin_types and 'H' in trip_filter.dest_types:
-                # Already covered both directions
-                pass
-            else:
-                # Add W->H as well
+        # Add reverse direction for bidirectional filters
+        # Check if we should add the reverse direction
+        if len(trip_filter.origin_types) == 1 and len(trip_filter.dest_types) == 1:
+            origin = trip_filter.origin_types[0]
+            dest = trip_filter.dest_types[0]
+            # Add reverse if not already included (e.g., if H->W, add W->H unless both are already specified)
+            if origin != dest:
                 origin_dest_condition = origin_dest_condition | (
-                    (col("location_type") == "W") & (col("dest_location_type") == "H")
+                    (col("location_type") == dest) & (col("dest_location_type") == origin)
                 )
 
         filter_conditions.append(origin_dest_condition)

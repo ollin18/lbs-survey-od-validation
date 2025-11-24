@@ -193,7 +193,7 @@ def hw_raw_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
 
 
 def ho_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfig:
-    """Home-to-Other trips with informed sampling."""
+    """Home-to-Other and Other-to-Home trips with informed sampling (bidirectional)."""
     return AnalysisConfig(
         name="HO_informed",
         country=country,
@@ -205,9 +205,9 @@ def ho_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfi
         month_range=None,
         trip_filter=TripFilterConfig(
             origin_types=['H'],
-            dest_types=None,  # Any destination except Home
+            dest_types=['O'],  # H->O only; O->H will be added by bidirectional logic
             weekday_only=True,
-            exclude_other=True,
+            exclude_other=False,  # Include Other type
             same_day_only=True,
             select_first_hw=False,
             select_last_wh=False
@@ -216,7 +216,7 @@ def ho_informed_config(country: str = "MX", city: str = "cdmx") -> AnalysisConfi
             strategy="informed",
             distribution_path=f"../../../data/clean/{city}/survey/ho_trips_by_hour.csv"
         ),
-        plot_title_suffix="Home-to-Other - Informed"
+        plot_title_suffix="Home-Other - Informed"
     )
 
 
