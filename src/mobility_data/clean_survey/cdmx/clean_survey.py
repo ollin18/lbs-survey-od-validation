@@ -32,6 +32,7 @@ population.to_csv(os.path.join(DATA_PATH,"geomid_population.csv"), index=False)
 tviaje = pd.read_csv("../../../../data/raw/cdmx_survey/tviaje_eod2017/conjunto_de_datos/tviaje.csv", dtype={"dto_origen": str, "dto_dest": str})
 # Keep only trips to work
 work = tviaje.loc[tviaje["p5_13"] == 2]
+work = tviaje.loc[tviaje["p5_3"] == 1] # Weekday
 work = work[["dto_origen", "dto_dest", "factor"]]
 work = work.rename(columns={"dto_origen": "home_geomid", "dto_dest": "work_geomid"})
 
