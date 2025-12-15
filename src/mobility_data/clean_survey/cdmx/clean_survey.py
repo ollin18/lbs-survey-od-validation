@@ -76,6 +76,7 @@ district_counts_od.to_csv(os.path.join(DATA_PATH,"od_matrix.csv"), index=False)
 # Home based work trips by hour of the day
 job = tviaje[["id_soc", "p5_13", "p5_6", "p5_9_1", "p5_11a", "p5_3", "factor"]]
 job = job.loc[job["p5_9_1"] != 99]
+job = job.loc[job["p5_3"] == 1] # Weekday
 job.rename(columns={"p5_9_1": "start_hour", "p5_6": "type_origin", "p5_13":"propos", "p5_11a":"type_dest"}, inplace=True)
 
 to_work = job.loc[(job["type_origin"] == 1) & (job["propos"].isin([2]))]

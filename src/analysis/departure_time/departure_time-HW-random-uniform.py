@@ -18,30 +18,30 @@ spark = (
     SparkSession.builder
     .appName("MobilityAnalysis")
     .master("local[20]")  # Use 20 cores, leave some for OS
-    
+
     # Memory settings (leave ~10GB for OS)
     .config("spark.driver.memory", "60g")
     .config("spark.driver.maxResultSize", "20g")
     .config("spark.executor.memory", "60g")  # In local mode, this is the same as driver
-    
+
     # Local directory for spill
     .config("spark.local.dir", "/global/scratch/p2p3/pl1_lbs/ollin")
-    
+
     # Reduce shuffle partitions for single node
     .config("spark.sql.shuffle.partitions", "40")  # 2x cores
     .config("spark.default.parallelism", "40")
-    
+
     # Enable adaptive execution
     .config("spark.sql.adaptive.enabled", "true")
     .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
-    
+
     # Serialization
     .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    
+
     # Memory fraction for execution vs storage
     .config("spark.memory.fraction", "0.8")
     .config("spark.memory.storageFraction", "0.3")
-    
+
     .getOrCreate()
 )
 
@@ -202,7 +202,7 @@ for month_row in months[1:3]:  # replace with "months" to process all
     # Real moves (cluster changes), weekday only, H/W at origin OR destination,
     # valid timestamps with positive interval, and same calendar day
     U = F.rand(seed=42)
-    
+
     df_trips = (
         df_with_next
         .filter(
@@ -235,19 +235,19 @@ for month_row in months[1:3]:  # replace with "months" to process all
 
     w_first_hw = Window.partitionBy(UID_COL, "origin_end_date").orderBy("rand_start_epoch")
     w_last_wh = Window.partitionBy(UID_COL, "origin_end_date").orderBy(col("rand_start_epoch").desc())
-    
+
     df_trips = (
         df_trips
-        .withColumn("trip_direction", 
+        .withColumn("trip_direction",
             F.when(col(LOC_TYPE_COL) == "H", "H_to_W").otherwise("W_to_H"))
-        .withColumn("rn_hw", 
+        .withColumn("rn_hw",
             F.when(col("trip_direction") == "H_to_W", row_number().over(w_first_hw)).otherwise(999))
         .withColumn("rn_wh",
             F.when(col("trip_direction") == "W_to_H", row_number().over(w_last_wh)).otherwise(999))
         .filter((col("rn_hw") == 1) | (col("rn_wh") == 1))
         .drop("rn_hw", "rn_wh", "trip_direction")
     )
-    
+
 
     # Keep only what you need for downstream aggregation
     df_trips_slim = (
@@ -295,7 +295,7 @@ trips_by_hour = df_all_trips.groupBy("trip_start_hour") \
 
 # Calculate percentages
 trips_by_hour = trips_by_hour.withColumn(
-    "percentage_of_trips", 
+    "percentage_of_trips",
     spark_round((col("trip_count") / lit(total_trips)) * 100, 2)
 )
 
@@ -304,8 +304,8 @@ from pyspark.sql.types import IntegerType
 
 hours_df = spark.createDataFrame([(i,) for i in range(24)], ["trip_start_hour"])
 result_complete = hours_df.join(
-    trips_by_hour, 
-    on="trip_start_hour", 
+    trips_by_hour,
+    on="trip_start_hour",
     how="left"
 ).fillna(0).orderBy("trip_start_hour")
 
@@ -332,10 +332,10 @@ result_pandas["percentage_of_trips"] = (result_pandas["trip_count"]/result_panda
 import matplotlib.pyplot as plt
 
 plt.figure(figsize=(14, 7))
-plt.plot(result_pandas['trip_start_hour'], 
-         result_pandas['percentage_of_trips'], 
-         marker='o', 
-         linewidth=2.5, 
+plt.plot(result_pandas['trip_start_hour'],
+         result_pandas['percentage_of_trips'],
+         marker='o',
+         linewidth=2.5,
          markersize=8,
          color='#2E86AB',
          markerfacecolor='#2E86AB',
